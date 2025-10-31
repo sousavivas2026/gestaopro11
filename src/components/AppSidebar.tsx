@@ -1,6 +1,6 @@
 import { LayoutDashboard, FileText, Wallet, Factory, ShoppingBag, Package, Wrench, Receipt, ShoppingCart, Archive, Truck, Users as UsersIcon, UserCircle, FileCheck, Settings, LogOut } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import {
   Sidebar,
   SidebarContent,

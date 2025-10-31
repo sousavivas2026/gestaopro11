@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Users2, UserPlus, Trash2, Key } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 const permissions = [
   { id: "dashboard", label: "Dashboard" },

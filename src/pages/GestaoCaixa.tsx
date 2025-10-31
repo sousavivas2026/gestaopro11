@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Wallet, TrendingUp, TrendingDown, DollarSign, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { CopyButton } from "@/components/CopyButton";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
