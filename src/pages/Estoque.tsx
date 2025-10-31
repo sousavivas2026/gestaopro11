@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Package, AlertTriangle, Trash2, FileDown, Plus, Minus } from "lucide-react";
+import { Package, AlertTriangle, Trash2, FileDown, Plus, Minus, Copy, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Estoque() {
@@ -176,7 +176,7 @@ export default function Estoque() {
               {selectedIds.length > 0 && (
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={handleExportSelected}>
-                    <FileDown className="h-4 w-4 mr-2" /> Exportar ({selectedIds.length})
+                    <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
                   </Button>
                   <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
                     <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
@@ -242,6 +242,17 @@ export default function Estoque() {
                           onClick={() => adjustStockMutation.mutate({ id: product.id, adjustment: -1 })}
                         >
                           <Minus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const text = `${product.name}\nSKU: ${product.sku}\nEstoque: ${product.stock_quantity}\nLocalização: ${product.location || '-'}`;
+                            navigator.clipboard.writeText(text);
+                            toast.success("Produto copiado");
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
                         </Button>
                       </div>
                     </TableCell>

@@ -234,7 +234,7 @@ export default function Configuracoes() {
                 <Palette className="h-5 w-5 text-primary" />
                 Personalização da Interface
               </CardTitle>
-              <CardDescription>Escolha o tema de cores para a interface do sistema</CardDescription>
+              <CardDescription>Personalize cores, fontes e visual do sistema</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -288,24 +288,17 @@ export default function Configuracoes() {
               </div>
 
               <div className="pt-4 border-t">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base">Tema Atual</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {theme === 'light' ? '☀️ Modo Claro' : theme === 'dark' ? '🌙 Modo Escuro' : '💻 Seguindo o Sistema'}
-                    </p>
-                  </div>
-                  <Select value={theme} onValueChange={setTheme}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">☀️ Modo Claro</SelectItem>
-                      <SelectItem value="dark">🌙 Modo Escuro</SelectItem>
-                      <SelectItem value="system">💻 Sistema</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Button 
+                  onClick={() => window.location.href = '/configuracoes/aparencia'}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Palette className="h-4 w-4 mr-2" />
+                  Personalizar Cores e Fontes
+                </Button>
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  Customize as cores RGB, fontes e estilos do sistema
+                </p>
               </div>
 
               <div className="p-4 rounded-lg bg-muted">

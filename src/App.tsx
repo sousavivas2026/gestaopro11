@@ -8,7 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Relatorios from "./pages/Relatorios";
 import GestaoCaixa from "./pages/GestaoCaixa";
 import Producao from "./pages/Producao";
-import PedidosMarketplace from "./pages/PedidosMarketplace";
+import PedidosMarketplace from "./pages/PedidosMarketplaceNovo";
 import Produtos from "./pages/Produtos";
 import Servicos from "./pages/Servicos";
 import Despesas from "./pages/Despesas";
@@ -20,6 +20,8 @@ import Funcionarios from "./pages/Funcionarios";
 import NotasFiscais from "./pages/NotasFiscais";
 import MaquinasVeiculos from "./pages/MaquinasVeiculos";
 import Configuracoes from "./pages/Configuracoes";
+import ConfiguracoesAparencia from "./pages/ConfiguracoesAparencia";
+import GerenciamentoUsuarios from "./pages/GerenciamentoUsuarios";
 import Usuarios from "./pages/Usuarios";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -49,6 +51,8 @@ const App = () => (
       <Route path="/notas-fiscais" element={<ProtectedRoute><Layout><NotasFiscais /></Layout></ProtectedRoute>} />
       <Route path="/maquinas-veiculos" element={<ProtectedRoute><Layout><MaquinasVeiculos /></Layout></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><Layout><Configuracoes /></Layout></ProtectedRoute>} />
+      <Route path="/configuracoes/aparencia" element={<ProtectedRoute><Layout><ConfiguracoesAparencia /></Layout></ProtectedRoute>} />
+      <Route path="/gerenciamento-usuarios" element={<ProtectedRoute><Layout><GerenciamentoUsuarios /></Layout></ProtectedRoute>} />
       <Route path="/usuarios" element={<ProtectedRoute><Layout><Usuarios /></Layout></ProtectedRoute>} />
       <Route path="/monitor-producao" element={<MonitorProducao />} />
       <Route path="/monitor-produtos" element={<MonitorProdutos />} />

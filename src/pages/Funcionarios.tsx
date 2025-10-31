@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, UserCircle, Copy, Plus } from "lucide-react";
+import { Trash2, Edit, UserCircle, Copy, Plus, FileText } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CopyButton } from "@/components/CopyButton";
@@ -17,6 +18,7 @@ export default function Funcionarios() {
   const queryClient = useQueryClient();
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
@@ -62,6 +64,34 @@ export default function Funcionarios() {
       toast.success("Funcionário excluído com sucesso!");
     },
   });
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === employees.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(employees.map((e: any) => e.id));
+    }
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione funcionários para exportar");
+      return;
+    }
+    const selected = employees.filter((e: any) => selectedIds.includes(e.id));
+    const csv = [
+      ['Nome', 'Cargo', 'Email', 'Telefone', 'Salário'],
+      ...selected.map((e: any) => [e.name, e.role, e.email, e.phone, e.salary])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `funcionarios-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -173,12 +203,25 @@ export default function Funcionarios() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Funcionários</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Lista de Funcionários</CardTitle>
+              {selectedIds.length > 0 && (
+                <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                  <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedIds.length === employees.length && employees.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Cargo</TableHead>
                   <TableHead>Email</TableHead>
@@ -191,6 +234,18 @@ export default function Funcionarios() {
               <TableBody>
                 {employees.map((employee: any) => (
                   <TableRow key={employee.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(employee.id)}
+                        onCheckedChange={() => {
+                          setSelectedIds(prev =>
+                            prev.includes(employee.id)
+                              ? prev.filter(id => id !== employee.id)
+                              : [...prev, employee.id]
+                          );
+                        }}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{employee.name}</TableCell>
                     <TableCell>{employee.role}</TableCell>
                     <TableCell>{employee.email}</TableCell>
