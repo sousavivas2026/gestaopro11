@@ -31,15 +31,15 @@ export function ManagementMonitor() {
   const { data: expenses = [] } = useQuery({
     queryKey: ['expenses-monitor'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('expenses').select('*').order('due_date');
+      const { data, error } = await supabase.from('expenses').select('*');
       if (error) throw error;
       const today = new Date();
       return (data || []).filter((exp: any) => {
-        if (!exp.due_date || exp.status === 'paid') return false;
+        if (!exp.due_date || exp.paid) return false;
         const dueDate = parseISO(exp.due_date);
         const daysUntil = differenceInDays(dueDate, today);
         return daysUntil >= -2 && daysUntil <= 7;
-      });
+      }).sort((a: any, b: any) => differenceInDays(parseISO(a.due_date), parseISO(b.due_date)));
     },
     refetchInterval: 5000,
   });
@@ -47,7 +47,7 @@ export function ManagementMonitor() {
   const { data: employees = [] } = useQuery({
     queryKey: ['employees-monitor'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('employees').select('*').order('birth_date');
+      const { data, error } = await supabase.from('employees').select('*');
       if (error) throw error;
       const today = new Date();
       return (data || []).filter((emp: any) => {
@@ -56,6 +56,12 @@ export function ManagementMonitor() {
         const thisYearBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
         const daysUntil = differenceInDays(thisYearBirthday, today);
         return daysUntil >= 0 && daysUntil <= 30;
+      }).sort((a: any, b: any) => {
+        const dateA = parseISO(a.birth_date);
+        const dateB = parseISO(b.birth_date);
+        const todayA = new Date(today.getFullYear(), dateA.getMonth(), dateA.getDate());
+        const todayB = new Date(today.getFullYear(), dateB.getMonth(), dateB.getDate());
+        return differenceInDays(todayA, today) - differenceInDays(todayB, today);
       });
     },
     refetchInterval: 5000,

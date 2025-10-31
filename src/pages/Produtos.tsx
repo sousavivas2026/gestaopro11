@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Package, Copy, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, Edit, Package, Copy, Plus, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { CopyButton } from "@/components/CopyButton";
 
@@ -17,6 +18,7 @@ export default function Produtos() {
   const queryClient = useQueryClient();
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
@@ -103,6 +105,60 @@ export default function Produtos() {
       ...clonedData,
       name: `${clonedData.name} (Cópia)`,
     });
+  };
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('products').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(`${selectedIds.length} produto(s) removido(s)`);
+      setSelectedIds([]);
+    },
+  });
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === products.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(products.map((p: any) => p.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} produto(s)?`)) return;
+    deleteMultipleMutation.mutate(selectedIds);
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione produtos para exportar");
+      return;
+    }
+    const selectedProducts = products.filter((p: any) => selectedIds.includes(p.id));
+    const csv = [
+      ['Nome', 'SKU', 'Categoria', 'Estoque', 'Preço Venda', 'Preço Custo'],
+      ...selectedProducts.map((p: any) => [
+        p.name, p.sku || '', p.category || '', p.stock_quantity, p.unit_price, p.cost_price
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `produtos-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
   };
 
   const lowStockProducts = products.filter((p: any) => p.stock_quantity <= p.minimum_stock);
@@ -206,12 +262,30 @@ export default function Produtos() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Produtos</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Lista de Produtos</CardTitle>
+              {selectedIds.length > 0 && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                    <FileDown className="h-4 w-4 mr-2" /> Exportar ({selectedIds.length})
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedIds.length === products.length && products.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Categoria</TableHead>
@@ -224,6 +298,12 @@ export default function Produtos() {
               <TableBody>
                 {products.map((product: any) => (
                   <TableRow key={product.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(product.id)}
+                        onCheckedChange={() => handleSelectOne(product.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.sku}</TableCell>
                     <TableCell>{product.category}</TableCell>

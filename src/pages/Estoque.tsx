@@ -1,11 +1,18 @@
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Package, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Package, AlertTriangle, Trash2, FileDown, Plus, Minus } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Estoque() {
+  const queryClient = useQueryClient();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const { data: products = [] } = useQuery({
     queryKey: ['products-stock'],
     queryFn: async () => {
@@ -17,6 +24,75 @@ export default function Estoque() {
 
   const lowStockProducts = products.filter((p: any) => p.stock_quantity <= p.minimum_stock);
   const totalValue = products.reduce((sum: number, p: any) => sum + (p.stock_quantity * p.cost_price), 0);
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('products').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products-stock'] });
+      toast.success(`${selectedIds.length} produto(s) removido(s)`);
+      setSelectedIds([]);
+    },
+  });
+
+  const adjustStockMutation = useMutation({
+    mutationFn: async ({ id, adjustment }: { id: string; adjustment: number }) => {
+      const product = products.find((p: any) => p.id === id);
+      if (!product) return;
+      const newQuantity = Math.max(0, product.stock_quantity + adjustment);
+      const { error } = await supabase.from('products').update({ stock_quantity: newQuantity }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products-stock'] });
+      toast.success("Estoque atualizado");
+    },
+  });
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === products.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(products.map((p: any) => p.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} produto(s)?`)) return;
+    deleteMultipleMutation.mutate(selectedIds);
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione produtos para exportar");
+      return;
+    }
+    const selectedProducts = products.filter((p: any) => selectedIds.includes(p.id));
+    const csv = [
+      ['Produto', 'SKU', 'Categoria', 'Estoque', 'Mínimo', 'Custo', 'Valor Total', 'Localização'],
+      ...selectedProducts.map((p: any) => [
+        p.name, p.sku, p.category, p.stock_quantity, p.minimum_stock,
+        p.cost_price, (p.stock_quantity * p.cost_price).toFixed(2), p.location || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `estoque-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
 
   return (
     <div className="p-4 md:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
@@ -95,12 +171,30 @@ export default function Estoque() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Inventário Completo</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Inventário Completo</CardTitle>
+              {selectedIds.length > 0 && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                    <FileDown className="h-4 w-4 mr-2" /> Exportar ({selectedIds.length})
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedIds.length === products.length && products.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Produto</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Categoria</TableHead>
@@ -109,11 +203,18 @@ export default function Estoque() {
                   <TableHead>Custo Unit.</TableHead>
                   <TableHead>Valor Total</TableHead>
                   <TableHead>Localização</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {products.map((product: any) => (
                   <TableRow key={product.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(product.id)}
+                        onCheckedChange={() => handleSelectOne(product.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.sku}</TableCell>
                     <TableCell>{product.category}</TableCell>
@@ -126,6 +227,24 @@ export default function Estoque() {
                     <TableCell>R$ {product.cost_price?.toFixed(2)}</TableCell>
                     <TableCell>R$ {(product.stock_quantity * product.cost_price).toFixed(2)}</TableCell>
                     <TableCell>{product.location || '-'}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => adjustStockMutation.mutate({ id: product.id, adjustment: 1 })}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => adjustStockMutation.mutate({ id: product.id, adjustment: -1 })}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
