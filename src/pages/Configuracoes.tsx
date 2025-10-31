@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, Bell, Palette, Database, Volume2, Download, Upload, Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "next-themes";
+import { SoundAlertSettings } from "@/components/SoundAlertSettings";
 
 export default function Configuracoes() {
   const { theme, setTheme } = useTheme();
@@ -223,101 +224,7 @@ export default function Configuracoes() {
         </TabsContent>
 
         <TabsContent value="notificacoes" className="space-y-4">
-          <Card className="bg-purple-600 text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Volume2 className="h-5 w-5" />
-                Notificações de Áudio
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-                  <div>
-                    <p className="font-semibold">⚠️ Novo Pedido</p>
-                    <p className="text-sm opacity-90">Aviso sonoro quando chegar um novo pedido</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="bg-white text-purple-600">
-                    Testar
-                  </Button>
-                </div>
-                <Input
-                  placeholder="Procurar... file:nome-que-você-quiser-colocar"
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
-                />
-
-                <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-                  <div>
-                    <p className="font-semibold">✅ Pedido Concluído</p>
-                    <p className="text-sm opacity-90">Aviso sonoro quando um pedido for concluído</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="bg-white text-purple-600">
-                    Testar
-                  </Button>
-                </div>
-                <Input
-                  placeholder="Procurar... file:nome-que-você-quiser-colocar"
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
-                />
-
-                <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-                  <div>
-                    <p className="font-semibold">⚠️ Estoque Baixo</p>
-                    <p className="text-sm opacity-90">Aviso sonoro quando um produto com estoque baixo</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="bg-white text-purple-600">
-                    Testar
-                  </Button>
-                </div>
-                <Input
-                  placeholder="Procurar... file:nome-que-você-quiser-colocar"
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
-                />
-              </div>
-
-              <p className="text-sm">
-                📢 Obs: use o arquivo .MP3 ou .WAV até 1 MB para, Coloque os arquivos na pasta dos áudios do servidor
-              </p>
-
-              <div className="border-t border-white/20 pt-4">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  🔔 Avisos Manuais Personalizados
-                </h3>
-                <p className="text-sm mb-3">Configure até 5 avisos por hora! Personalize o alarme e envie para muitos...</p>
-                
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <div key={num} className="mb-2">
-                    <Label className="text-white">Audio {num}:</Label>
-                    <Input
-                      placeholder="file:nome-que-você-quiser-colocar"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-sm">
-                📢 Como usar: ir no menu user, ir saldos e vídeos, criou um nome para áudio e os gravar esse valor, utilize o FFMPEG para gravar os áudios e torne-se audio em arquivo .htf
-              </p>
-
-              <div className="border-t border-white/20 pt-4">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  🔔 Alertas Sonoros
-                </h3>
-                <p className="text-sm mb-3">Note do áudio</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input type="radio" id="desativado" name="alerta" />
-                    <Label htmlFor="desativado" className="text-white">📵 Desativado</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input type="radio" id="av-simples" name="alerta" defaultChecked />
-                    <Label htmlFor="av-simples" className="text-white">🔔 Av. simples padrão</Label>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SoundAlertSettings />
         </TabsContent>
 
         <TabsContent value="aparencia">

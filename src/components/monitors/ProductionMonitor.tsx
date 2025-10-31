@@ -6,11 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useSoundAlert } from "@/contexts/SoundAlertContext";
 
 type ViewType = 'pending' | 'in_progress' | 'completed';
 
 export function ProductionMonitor() {
   const [currentView, setCurrentView] = useState<ViewType>("pending");
+  const { playAlert, alertMode } = useSoundAlert();
   
   const views: ViewType[] = ['pending', 'in_progress', 'completed'];
   
@@ -47,11 +49,10 @@ export function ProductionMonitor() {
   });
 
   useEffect(() => {
-    if (pendingOrders.length > 0) {
-      const audio = new Audio('/notification.mp3');
-      audio.play().catch(() => console.log('Audio play failed'));
+    if (pendingOrders.length > 0 && alertMode !== 'disabled') {
+      playAlert('general');
     }
-  }, [dataUpdatedAt]);
+  }, [dataUpdatedAt, alertMode, playAlert]);
 
   const getViewTitle = () => {
     switch(currentView) {

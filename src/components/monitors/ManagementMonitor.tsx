@@ -7,18 +7,15 @@ import { Cake, AlertCircle, DollarSign, Wrench, ShoppingBag } from "lucide-react
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import MarketplaceSlide from "@/components/monitor/MarketplaceSlide";
-import { initializeMarketplaceStorage } from "@/utils/marketplaceSync";
+import { useSoundAlert } from "@/contexts/SoundAlertContext";
 
 type ViewType = 'marketplace' | 'expenses' | 'birthdays' | 'services_summary';
 
 export function ManagementMonitor() {
   const [currentView, setCurrentView] = useState<ViewType>("marketplace");
+  const { playAlert } = useSoundAlert();
   
   const views: ViewType[] = ['marketplace', 'expenses', 'birthdays', 'services_summary'];
-  
-  useEffect(() => {
-    initializeMarketplaceStorage();
-  }, []);
   
   useEffect(() => {
     const interval = setInterval(() => {

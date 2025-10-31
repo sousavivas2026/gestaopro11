@@ -1,26 +1,36 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, Clock, CheckCircle2, Package, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { validateAndNormalizeOrders } from "@/utils/marketplaceSync";
+import { supabase } from "@/integrations/supabase/client";
+import { useSoundAlert } from "@/contexts/SoundAlertContext";
 
 export default function MarketplaceSlide() {
-  const { data: orders = [] } = useQuery({
+  const { playAlert, alertMode } = useSoundAlert();
+
+  const { data: orders = [], dataUpdatedAt } = useQuery({
     queryKey: ['marketplace-orders-monitor'],
     queryFn: async () => {
-      const normalized = validateAndNormalizeOrders();
-      return normalized.sort((a, b) => {
-        const dateA = new Date(a.created_date || a.created_at || '').getTime();
-        const dateB = new Date(b.created_date || b.created_at || '').getTime();
-        return dateB - dateA;
-      });
+      const { data, error } = await supabase
+        .from('marketplace_orders')
+        .select('*')
+        .order('created_date', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
     refetchInterval: 5000,
   });
 
   const pendingOrders = orders.filter(o => o.status === 'pendente');
+
+  useEffect(() => {
+    if (pendingOrders.length > 0 && alertMode === 'on-order') {
+      playAlert('new-order');
+    }
+  }, [dataUpdatedAt, alertMode, playAlert]);
 
   const getStatusConfig = (status: string) => {
     const configs = {

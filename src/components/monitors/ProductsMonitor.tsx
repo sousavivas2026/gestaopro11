@@ -6,11 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useSoundAlert } from "@/contexts/SoundAlertContext";
 
 type ViewType = 'critical' | 'low_stock' | 'purchase_list';
 
 export function ProductsMonitor() {
   const [currentView, setCurrentView] = useState<ViewType>("critical");
+  const { playAlert, alertMode } = useSoundAlert();
   
   const views: ViewType[] = ['critical', 'low_stock', 'purchase_list'];
   
@@ -49,11 +51,10 @@ export function ProductsMonitor() {
   );
 
   useEffect(() => {
-    if (criticalStock.length > 0) {
-      const audio = new Audio('/notification.mp3');
-      audio.play().catch(() => console.log('Audio play failed'));
+    if (criticalStock.length > 0 && alertMode !== 'disabled') {
+      playAlert('critical-stock');
     }
-  }, [dataUpdatedAt]);
+  }, [dataUpdatedAt, alertMode, playAlert]);
 
   const getViewTitle = () => {
     switch(currentView) {
