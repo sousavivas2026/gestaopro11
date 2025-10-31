@@ -8,15 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Edit, ShoppingCart, Copy } from "lucide-react";
+import { Trash2, Edit, ShoppingCart, Copy, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { CopyButton } from "@/components/CopyButton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Vendas() {
   const queryClient = useQueryClient();
   const [editingSale, setEditingSale] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: sales = [] } = useQuery({
     queryKey: ['sales'],
@@ -122,6 +124,51 @@ export default function Vendas() {
     await createMutation.mutateAsync(clonedData);
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.length === sales.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(sales.map((s: any) => s.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione vendas para exportar");
+      return;
+    }
+    const selectedSales = sales.filter((s: any) => selectedIds.includes(s.id));
+    const csv = [
+      ['Data', 'Produto', 'Cliente', 'Qtd', 'Receita', 'Lucro', 'Pagamento'],
+      ...selectedSales.map((s: any) => [
+        format(new Date(s.sale_date), 'dd/MM/yyyy'), s.product_name, s.customer_name || '', 
+        s.quantity, s.total_revenue, s.profit, s.payment_method || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vendas-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} venda(s)?`)) return;
+    Promise.all(selectedIds.map(id => supabase.from('sales').delete().eq('id', id))).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success(`${selectedIds.length} venda(s) removida(s)`);
+      setSelectedIds([]);
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -130,7 +177,7 @@ export default function Vendas() {
             <ShoppingCart className="h-8 w-8 text-primary" />
             Vendas
           </h1>
-          <p className="text-muted-foreground">Gerencie suas vendas</p>
+          <p className="text-muted-foreground">Registre e acompanhe todas as vendas</p>
         </div>
         <Button onClick={() => { setShowForm(!showForm); setEditingSale(null); }}>
           Nova Venda
@@ -234,12 +281,30 @@ export default function Vendas() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Vendas Cadastradas</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Vendas Cadastradas</CardTitle>
+            {selectedIds.length > 0 && (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                  <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedIds.length === sales.length && sales.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Cliente</TableHead>
@@ -253,6 +318,12 @@ export default function Vendas() {
             <TableBody>
               {sales.map((sale: any) => (
                 <TableRow key={sale.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(sale.id)}
+                      onCheckedChange={() => handleSelectOne(sale.id)}
+                    />
+                  </TableCell>
                   <TableCell>{format(new Date(sale.sale_date), 'dd/MM/yyyy')}</TableCell>
                   <TableCell>{sale.product_name}</TableCell>
                   <TableCell>{sale.customer_name || '-'}</TableCell>
