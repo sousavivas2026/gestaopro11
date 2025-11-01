@@ -38,28 +38,28 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-      <SidebarHeader className="border-b border-sidebar-border p-4">
+    <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar touch-pan-y overscroll-contain w-[180px]" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <SidebarHeader className="border-b border-sidebar-border p-3">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
+          <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
             GP
           </div>
           {!collapsed && (
             <div>
-              <h2 className="font-bold text-sm text-sidebar-foreground">Gestão PRO</h2>
-              <p className="text-xs text-sidebar-foreground/60">by website</p>
+              <h2 className="font-bold text-xs text-sidebar-foreground">Gestão PRO</h2>
+              <p className="text-[10px] text-sidebar-foreground/60">by website</p>
             </div>
           )}
         </div>
       </SidebarHeader>
       <SidebarContent className="overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <SidebarGroup>
-          <SidebarGroupLabel>MENU</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px]">MENU</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title} className="touch-manipulation active:scale-95 min-h-[44px]">
+                  <SidebarMenuButton asChild tooltip={item.title} className="touch-manipulation active:scale-95 min-h-[36px] text-xs">
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
@@ -69,8 +69,8 @@ export function AppSidebar() {
                           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       }
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-3.5 w-3.5" />
+                      <span className="text-xs">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -92,7 +92,10 @@ export default function GerenciamentoUsuarios() {
       return;
     }
 
+    setLoading(true);
     try {
+      console.log('Tentando criar usuário:', { nome, email, tipo, permissoes });
+      
       const { data, error } = await supabase
         .from('usuarios')
         .insert([{
@@ -113,9 +116,16 @@ export default function GerenciamentoUsuarios() {
       toast.success("Usuário criado com sucesso!");
       setShowDialog(false);
       resetForm();
-      carregarUsuarios();
+      
+      // Forçar recarregamento após pequeno delay
+      setTimeout(() => {
+        carregarUsuarios();
+      }, 500);
     } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
       toast.error("Erro ao criar usuário: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
