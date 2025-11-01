@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Edit, Users, Copy, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, Edit, Users, Copy, Plus, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CopyButton } from "@/components/CopyButton";
@@ -16,6 +17,7 @@ export default function Clientes() {
   const queryClient = useQueryClient();
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
@@ -61,6 +63,61 @@ export default function Clientes() {
       toast.success("Cliente excluído com sucesso!");
     },
   });
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('customers').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast.success(`${selectedIds.length} cliente(s) removido(s)`);
+      setSelectedIds([]);
+    },
+  });
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === customers.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(customers.map((c: any) => c.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} cliente(s)?`)) return;
+    deleteMultipleMutation.mutate(selectedIds);
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione clientes para exportar");
+      return;
+    }
+    const selectedCustomers = customers.filter((c: any) => selectedIds.includes(c.id));
+    const csv = [
+      ['Nome', 'Email', 'Telefone', 'CPF/CNPJ', 'Cidade', 'Estado', 'Endereço'],
+      ...selectedCustomers.map((c: any) => [
+        c.name, c.email || '', c.phone || '', c.cpf_cnpj || '',
+        c.city || '', c.state || '', c.address || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `clientes-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -169,12 +226,30 @@ export default function Clientes() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Clientes</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Lista de Clientes</CardTitle>
+              {selectedIds.length > 0 && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                    <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedIds.length === customers.length && customers.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Telefone</TableHead>
@@ -186,6 +261,12 @@ export default function Clientes() {
               <TableBody>
                 {customers.map((customer: any) => (
                   <TableRow key={customer.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedIds.includes(customer.id)}
+                        onCheckedChange={() => handleSelectOne(customer.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell>{customer.email}</TableCell>
                     <TableCell>{customer.phone}</TableCell>

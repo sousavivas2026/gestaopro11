@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Edit, Truck, Copy, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, Edit, Truck, Copy, Plus, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { CopyButton } from "@/components/CopyButton";
 
@@ -15,6 +16,7 @@ export default function Fornecedores() {
   const queryClient = useQueryClient();
   const [editingSupplier, setEditingSupplier] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
@@ -60,6 +62,61 @@ export default function Fornecedores() {
       toast.success("Fornecedor excluído com sucesso!");
     },
   });
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('suppliers').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      toast.success(`${selectedIds.length} fornecedor(es) removido(s)`);
+      setSelectedIds([]);
+    },
+  });
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === suppliers.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(suppliers.map((s: any) => s.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} fornecedor(es)?`)) return;
+    deleteMultipleMutation.mutate(selectedIds);
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione fornecedores para exportar");
+      return;
+    }
+    const selectedSuppliers = suppliers.filter((s: any) => selectedIds.includes(s.id));
+    const csv = [
+      ['Nome', 'Contato', 'Email', 'Telefone', 'CNPJ', 'Cidade', 'Estado'],
+      ...selectedSuppliers.map((s: any) => [
+        s.name, s.contact_person || '', s.email || '', s.phone || '',
+        s.cnpj || '', s.city || '', s.state || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fornecedores-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -168,12 +225,30 @@ export default function Fornecedores() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Fornecedores</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Lista de Fornecedores</CardTitle>
+              {selectedIds.length > 0 && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                    <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedIds.length === suppliers.length && suppliers.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead>Email</TableHead>
@@ -185,6 +260,12 @@ export default function Fornecedores() {
               <TableBody>
                 {suppliers.map((supplier: any) => (
                   <TableRow key={supplier.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedIds.includes(supplier.id)}
+                        onCheckedChange={() => handleSelectOne(supplier.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{supplier.name}</TableCell>
                     <TableCell>{supplier.contact_person}</TableCell>
                     <TableCell>{supplier.email}</TableCell>

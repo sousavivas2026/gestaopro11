@@ -304,6 +304,12 @@ export default function Estoque() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedIds.length === products.length && products.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Material</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Quantidade</TableHead>
@@ -316,6 +322,12 @@ export default function Estoque() {
               <TableBody>
                 {products.map((product: any) => (
                   <TableRow key={product.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedIds.includes(product.id)}
+                        onCheckedChange={() => handleSelectOne(product.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.category || 'materia_prima'}</TableCell>
                     <TableCell>{product.stock_quantity} unidade</TableCell>
