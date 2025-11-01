@@ -10,7 +10,7 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 
-import { AISearch } from "@/components/AISearch";
+import { FloatingAISearch } from "@/components/FloatingAISearch";
 
 const chartData = [
   { product: "Fliperama metal - 1player", value: 1800 },
@@ -52,6 +52,17 @@ export default function Dashboard() {
       return data || [];
     },
   });
+
+  // Calcular produtos mais vendidos
+  const topProducts = sales.reduce((acc: any[], sale: any) => {
+    const existing = acc.find(item => item.product === sale.product_name);
+    if (existing) {
+      existing.value += sale.total_revenue || 0;
+    } else {
+      acc.push({ product: sale.product_name, value: sale.total_revenue || 0 });
+    }
+    return acc;
+  }, []).sort((a, b) => b.value - a.value).slice(0, 5);
 
   const { data: services = [] } = useQuery({
     queryKey: ['dashboard-services'],
@@ -106,7 +117,7 @@ export default function Dashboard() {
       </div>
 
       {/* Smart Search */}
-      <AISearch />
+      <FloatingAISearch />
 
       {/* Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -201,7 +212,7 @@ export default function Dashboard() {
               className="h-[300px]"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={topProducts.length > 0 ? topProducts : chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="product"

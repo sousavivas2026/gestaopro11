@@ -96,7 +96,28 @@ export default function GerenciamentoUsuarios() {
     try {
       console.log('Tentando criar usuário:', { nome, email, tipo, permissoes });
       
-      const { data, error } = await supabase
+      // Primeiro, criar usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: senha,
+        options: {
+          data: {
+            nome,
+            tipo
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error('Usuário não foi criado no sistema de autenticação');
+      }
+
+      console.log('Usuário Auth criado:', authData.user.id);
+      
+      // Depois, criar entrada na tabela usuarios
+      const { data: userData, error: userError } = await supabase
         .from('usuarios')
         .insert([{
           nome,
@@ -108,11 +129,11 @@ export default function GerenciamentoUsuarios() {
         .select()
         .single();
       
-      if (error) throw error;
+      if (userError) throw userError;
       
-      console.log('Usuário criado com sucesso:', data);
+      console.log('Usuário na tabela criado com sucesso:', userData);
       
-      toast.success("Usuário criado com sucesso!");
+      toast.success("Usuário criado com sucesso! Eles podem fazer login agora.");
       setShowDialog(false);
       resetForm();
       
@@ -308,15 +329,29 @@ export default function GerenciamentoUsuarios() {
                     </div>
                   </div>
 
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => handleRemoverUsuario(usuario.id)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Remover
-                  </Button>
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => {
+                        // TODO: Implementar diálogo de alterar senha
+                        toast.info("Funcionalidade em desenvolvimento");
+                      }}
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Alterar Senha
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleRemoverUsuario(usuario.id)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remover
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

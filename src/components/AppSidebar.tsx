@@ -1,6 +1,7 @@
 import { LayoutDashboard, FileText, Wallet, Factory, ShoppingBag, Package, Wrench, Receipt, ShoppingCart, Archive, Truck, Users as UsersIcon, UserCircle, FileCheck, Settings, LogOut } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Sidebar,
   SidebarContent,
@@ -15,27 +16,42 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Relatórios", url: "/relatorios", icon: FileText },
-  { title: "Gestão de Caixa", url: "/gestao-caixa", icon: Wallet },
-  { title: "Produção", url: "/producao", icon: Factory },
-  { title: "Pedidos Marketplace", url: "/pedidos-marketplace", icon: ShoppingBag },
-  { title: "Produtos", url: "/produtos", icon: Package },
-  { title: "Serviços", url: "/servicos", icon: Wrench },
-  { title: "Despesas", url: "/despesas", icon: Receipt },
-  { title: "Vendas", url: "/vendas", icon: ShoppingCart },
-  { title: "Estoque", url: "/estoque", icon: Archive },
-  { title: "Fornecedores", url: "/fornecedores", icon: Truck },
-  { title: "Clientes", url: "/clientes", icon: UsersIcon },
-  { title: "Funcionários", url: "/funcionarios", icon: UserCircle },
-  { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileCheck },
-  { title: "Máquinas e Veículos", url: "/maquinas-veiculos", icon: Settings },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, permission: "dashboard" },
+  { title: "Relatórios", url: "/relatorios", icon: FileText, permission: "relatorios" },
+  { title: "Gestão de Caixa", url: "/gestao-caixa", icon: Wallet, permission: "gestao_caixa" },
+  { title: "Produção", url: "/producao", icon: Factory, permission: "producao" },
+  { title: "Pedidos Marketplace", url: "/pedidos-marketplace", icon: ShoppingBag, permission: "pedidos_marketplace" },
+  { title: "Produtos", url: "/produtos", icon: Package, permission: "produtos" },
+  { title: "Serviços", url: "/servicos", icon: Wrench, permission: "servicos" },
+  { title: "Despesas", url: "/despesas", icon: Receipt, permission: "despesas" },
+  { title: "Vendas", url: "/vendas", icon: ShoppingCart, permission: "vendas" },
+  { title: "Estoque", url: "/estoque", icon: Archive, permission: "materiais" },
+  { title: "Fornecedores", url: "/fornecedores", icon: Truck, permission: "fornecedores" },
+  { title: "Clientes", url: "/clientes", icon: UsersIcon, permission: "clientes" },
+  { title: "Funcionários", url: "/funcionarios", icon: UserCircle, permission: "funcionarios" },
+  { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileCheck, permission: "faturas" },
+  { title: "Máquinas e Veículos", url: "/maquinas-veiculos", icon: Settings, permission: "alvos" },
+  { title: "Configurações", url: "/configuracoes", icon: Settings, permission: "dashboard" },
 ];
 
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
+  const { hasPermission, role, loading } = usePermissions();
   const collapsed = state === "collapsed";
+
+  // Filtrar itens do menu baseado nas permissões do usuário
+  const visibleMenuItems = menuItems.filter(item => {
+    if (role === 'admin') return true;
+    return hasPermission(item.permission);
+  });
+
+  if (loading) {
+    return (
+      <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar w-[180px]">
+        <div className="p-4 text-center text-muted-foreground">Carregando...</div>
+      </Sidebar>
+    );
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar touch-pan-y overscroll-contain w-[180px] shadow-[0_0_20px_rgba(16,185,129,0.3)]" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -70,7 +86,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">MENU</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title} className="touch-manipulation active:scale-95 min-h-[36px] text-xs">
                     <NavLink
