@@ -34,27 +34,40 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar touch-pan-y overscroll-contain w-[180px]" style={{ WebkitOverflowScrolling: 'touch' }}>
+    <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar touch-pan-y overscroll-contain w-[180px] shadow-[0_0_20px_rgba(16,185,129,0.3)]" style={{ WebkitOverflowScrolling: 'touch' }}>
       <SidebarHeader className="border-b border-sidebar-border p-3">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
-            GP
-          </div>
-          {!collapsed && (
-            <div>
-              <h2 className="font-bold text-xs text-sidebar-foreground">Gestão PRO</h2>
-              <p className="text-[10px] text-sidebar-foreground/60">by website</p>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs shadow-lg">
+              GP
             </div>
-          )}
+            {!collapsed && (
+              <div>
+                <h2 className="font-bold text-xs text-sidebar-foreground">Gestão PRO</h2>
+                <p className="text-[10px] text-muted-foreground">by website</p>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={toggleSidebar}
+            className="h-6 w-6 rounded hover:bg-sidebar-accent flex items-center justify-center transition-colors"
+            title={collapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            <div className="flex flex-col gap-0.5">
+              <div className="w-3 h-0.5 bg-sidebar-foreground rounded"></div>
+              <div className="w-3 h-0.5 bg-sidebar-foreground rounded"></div>
+              <div className="w-3 h-0.5 bg-sidebar-foreground rounded"></div>
+            </div>
+          </button>
         </div>
       </SidebarHeader>
       <SidebarContent className="overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px]">MENU</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">MENU</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -65,12 +78,12 @@ export function AppSidebar() {
                       end={item.url === "/"}
                       className={({ isActive }) =>
                         isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md font-medium"
+                          : "text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                       }
                     >
                       <item.icon className="h-3.5 w-3.5" />
-                      <span className="text-xs">{item.title}</span>
+                      <span className="text-xs font-medium">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -83,24 +96,25 @@ export function AppSidebar() {
       <div className="border-t border-sidebar-border p-2 mt-auto">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Usuários">
+            <SidebarMenuButton asChild tooltip="Gerenciar Usuários" className="min-h-[36px]">
               <NavLink 
-                to="/usuarios" 
+                to="/gerenciamento-usuarios" 
                 className={({ isActive }) => 
                   isActive 
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground" 
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md font-medium" 
+                    : "text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                 }
               >
                 <UsersIcon className="h-4 w-4" />
-                <span>Usuários</span>
+                <span className="text-xs font-medium">Usuários</span>
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           <SidebarMenuItem>
-        <SidebarMenuButton 
-              tooltip="Sair"
+            <SidebarMenuButton 
+              tooltip="Sair do Sistema"
+              className="min-h-[36px] text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
               onClick={async () => {
                 const { error } = await supabase.auth.signOut();
                 if (!error) {
@@ -109,7 +123,7 @@ export function AppSidebar() {
               }}
             >
               <LogOut className="h-4 w-4" />
-              <span>Sair</span>
+              <span className="text-xs font-medium">Sair</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

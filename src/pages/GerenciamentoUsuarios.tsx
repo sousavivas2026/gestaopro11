@@ -96,12 +96,27 @@ export default function GerenciamentoUsuarios() {
     try {
       console.log('Tentando criar usuário:', { nome, email, tipo, permissoes });
       
+      // Primeiro, criar usuário no auth do Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: senha,
+        options: {
+          data: {
+            nome,
+            tipo
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      // Depois, criar registro na tabela usuarios
       const { data, error } = await supabase
         .from('usuarios')
         .insert([{
+          id: authData.user?.id,
           nome,
           email,
-          senha_hash: btoa(senha),
           tipo,
           permissoes,
           ativo: true
@@ -117,10 +132,8 @@ export default function GerenciamentoUsuarios() {
       setShowDialog(false);
       resetForm();
       
-      // Forçar recarregamento após pequeno delay
-      setTimeout(() => {
-        carregarUsuarios();
-      }, 500);
+      // Forçar recarregamento imediato
+      await carregarUsuarios();
     } catch (error: any) {
       console.error('Erro ao criar usuário:', error);
       toast.error("Erro ao criar usuário: " + error.message);
