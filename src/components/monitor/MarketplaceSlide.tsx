@@ -28,7 +28,7 @@ export default function MarketplaceSlide() {
 
   useEffect(() => {
     if (pendingOrders.length > 0 && alertMode === 'on-order') {
-      playAlert('new-order');
+      playAlert('novo_pedido');
     }
   }, [dataUpdatedAt, alertMode, playAlert]);
 

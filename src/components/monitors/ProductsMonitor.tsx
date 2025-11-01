@@ -52,7 +52,7 @@ export function ProductsMonitor() {
 
   useEffect(() => {
     if (criticalStock.length > 0 && alertMode !== 'disabled') {
-      playAlert('critical-stock');
+      playAlert('estoque_baixo');
     }
   }, [dataUpdatedAt, alertMode, playAlert]);
 

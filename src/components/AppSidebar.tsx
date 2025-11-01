@@ -45,6 +45,9 @@ export function AppSidebar() {
     return hasPermission(item.permission);
   });
 
+  // Verificar se usuário tem acesso à página de usuários
+  const canAccessUserManagement = role === 'admin';
+
   if (loading) {
     return (
       <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar w-[180px]">
@@ -89,13 +92,13 @@ export function AppSidebar() {
               {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title} className="touch-manipulation active:scale-95 min-h-[36px] text-xs">
-                    <NavLink
+                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
                       className={({ isActive }) =>
                         isActive
-                          ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md font-medium"
-                          : "text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                          ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 shadow-md font-medium"
+                          : "text-sidebar-foreground hover:bg-blue-600 hover:text-white transition-colors"
                       }
                     >
                       <item.icon className="h-3.5 w-3.5" />
@@ -111,21 +114,23 @@ export function AppSidebar() {
       
       <div className="border-t border-sidebar-border p-2 mt-auto">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Gerenciar Usuários" className="min-h-[36px]">
-              <NavLink 
-                to="/gerenciamento-usuarios" 
-                className={({ isActive }) => 
-                  isActive 
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md font-medium" 
-                    : "text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                }
-              >
-                <UsersIcon className="h-4 w-4" />
-                <span className="text-xs font-medium">Usuários</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {canAccessUserManagement && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Gerenciar Usuários" className="min-h-[36px]">
+                <NavLink 
+                  to="/gerenciamento-usuarios" 
+                  className={({ isActive }) => 
+                    isActive 
+                      ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 shadow-md font-medium" 
+                      : "text-sidebar-foreground hover:bg-blue-600 hover:text-white transition-colors"
+                  }
+                >
+                  <UsersIcon className="h-4 w-4" />
+                  <span className="text-xs font-medium">Usuários</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           
           <SidebarMenuItem>
             <SidebarMenuButton 

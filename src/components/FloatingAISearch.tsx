@@ -7,13 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-export function FloatingAISearch() {
+export function FloatingAISearch({ onClose }: { onClose?: () => void }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [position, setPosition] = useState({ x: window.innerWidth / 2 - 300, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
-  const [isOpen, setIsOpen] = useState(true);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   
   const cardRef = useRef<HTMLDivElement>(null);
@@ -104,8 +103,6 @@ export function FloatingAISearch() {
     };
   }, [isDragging, dragStart]);
 
-  if (!isOpen) return null;
-
   return (
     <div
       ref={cardRef}
@@ -127,7 +124,7 @@ export function FloatingAISearch() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsOpen(false)}
+              onClick={onClose}
               className="hover:bg-white/20"
             >
               <X className="h-5 w-5" />

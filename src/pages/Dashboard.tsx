@@ -33,6 +33,7 @@ const recentServices = [
 ];
 
 export default function Dashboard() {
+  const [showSearch, setShowSearch] = useState(false);
   const { saldoCaixa, totalEntradas, totalSaidas, entradasCaixa, isLoading } = useDashboardData();
   
   const { data: products = [] } = useQuery({
@@ -117,7 +118,16 @@ export default function Dashboard() {
       </div>
 
       {/* Smart Search */}
-      <FloatingAISearch />
+      {showSearch && <FloatingAISearch onClose={() => setShowSearch(false)} />}
+      {!showSearch && (
+        <Button 
+          onClick={() => setShowSearch(true)}
+          className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg z-40"
+          variant="default"
+        >
+          <Sparkles className="h-6 w-6" />
+        </Button>
+      )}
 
       {/* Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -50,7 +50,7 @@ export function ProductionMonitor() {
 
   useEffect(() => {
     if (pendingOrders.length > 0 && alertMode !== 'disabled') {
-      playAlert('general');
+      playAlert('atencao_maquina');
     }
   }, [dataUpdatedAt, alertMode, playAlert]);
 

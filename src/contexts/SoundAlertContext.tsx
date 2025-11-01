@@ -2,18 +2,28 @@ import { createContext, useContext, useState, useCallback, ReactNode } from 'rea
 
 type AlertMode = 'disabled' | 'on-order' | 'interval';
 type AudioSource = 'server' | 'local';
+type SoundType = 'novo_pedido' | 'pedido_concluido' | 'atencao_maquina' | 'compareca_direcao' | 'estoque_baixo';
 
 interface SoundAlertContextType {
   alertMode: AlertMode;
   audioSource: AudioSource;
   setAlertMode: (mode: AlertMode) => void;
   setAudioSource: (source: AudioSource) => void;
-  playAlert: (type: 'new-order' | 'critical-stock' | 'general') => void;
+  playAlert: (type: SoundType) => void;
   playManualAudio: (name: string) => void;
   testSound: () => void;
+  selectedSounds: Record<string, SoundType>;
+  setSelectedSound: (context: string, sound: SoundType) => void;
 }
 
 const SoundAlertContext = createContext<SoundAlertContextType | undefined>(undefined);
+
+const DEFAULT_SOUNDS: Record<string, SoundType> = {
+  'marketplace_new': 'novo_pedido',
+  'marketplace_complete': 'pedido_concluido',
+  'monitor_external': 'atencao_maquina',
+  'stock_alert': 'estoque_baixo',
+};
 
 export function SoundAlertProvider({ children }: { children: ReactNode }) {
   const [alertMode, setAlertModeState] = useState<AlertMode>(() => {
@@ -22,6 +32,11 @@ export function SoundAlertProvider({ children }: { children: ReactNode }) {
   
   const [audioSource, setAudioSourceState] = useState<AudioSource>(() => {
     return (localStorage.getItem('audio_source') as AudioSource) || 'server';
+  });
+
+  const [selectedSounds, setSelectedSoundsState] = useState<Record<string, SoundType>>(() => {
+    const saved = localStorage.getItem('selected_sounds');
+    return saved ? JSON.parse(saved) : DEFAULT_SOUNDS;
   });
 
   const setAlertMode = useCallback((mode: AlertMode) => {
@@ -34,7 +49,15 @@ export function SoundAlertProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('audio_source', source);
   }, []);
 
-  const playAlert = useCallback((type: 'new-order' | 'critical-stock' | 'general') => {
+  const setSelectedSound = useCallback((context: string, sound: SoundType) => {
+    setSelectedSoundsState(prev => {
+      const updated = { ...prev, [context]: sound };
+      localStorage.setItem('selected_sounds', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
+  const playAlert = useCallback((type: SoundType) => {
     if (alertMode === 'disabled') return;
 
     try {
@@ -47,7 +70,7 @@ export function SoundAlertProvider({ children }: { children: ReactNode }) {
       }
 
       // Som padrão do servidor
-      const audio = new Audio('/notification.mp3');
+      const audio = new Audio(`/sounds/${type}.mp3`);
       audio.play().catch((err) => console.log('Audio play failed:', err));
     } catch (error) {
       console.error('Error playing alert:', error);
@@ -72,7 +95,7 @@ export function SoundAlertProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const testSound = useCallback(() => {
-    playAlert('general');
+    playAlert('novo_pedido');
   }, [playAlert]);
 
   return (
@@ -85,6 +108,8 @@ export function SoundAlertProvider({ children }: { children: ReactNode }) {
         playAlert,
         playManualAudio,
         testSound,
+        selectedSounds,
+        setSelectedSound,
       }}
     >
       {children}

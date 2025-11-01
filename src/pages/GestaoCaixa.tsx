@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wallet, TrendingUp, TrendingDown, DollarSign, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Wallet, TrendingUp, TrendingDown, DollarSign, Plus, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { CopyButton } from "@/components/CopyButton";
 import { supabase } from "@/lib/supabase";
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 export default function GestaoCaixa() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
 
   // Buscar movimentações de caixa
   const { data: cashMovements = [] } = useQuery({
@@ -76,6 +78,29 @@ export default function GestaoCaixa() {
       payment_method: formData.get('payment_method'),
       notes: `Categoria: ${category}`
     });
+  };
+
+  const handleCloneSelected = () => {
+    const movementsToClone = cashMovements.filter((m: any) => selectedMovements.includes(m.id));
+    
+    if (movementsToClone.length === 0) {
+      toast.error("Selecione pelo menos uma movimentação para clonar");
+      return;
+    }
+
+    movementsToClone.forEach((movement: any) => {
+      createMovement.mutate({
+        type: movement.description?.startsWith('Entrada') ? 'entrada' : 'saida',
+        description: movement.description?.replace('Entrada: ', '').replace('Saída: ', ''),
+        value: movement.value,
+        date: new Date().toISOString().split('T')[0],
+        payment_method: movement.payment_method,
+        notes: movement.notes
+      });
+    });
+
+    setSelectedMovements([]);
+    toast.success(`${movementsToClone.length} movimentação(ões) clonada(s)!`);
   };
 
   return (
@@ -229,6 +254,12 @@ export default function GestaoCaixa() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Movimento do Caixa</CardTitle>
           <div className="flex gap-2">
+            {selectedMovements.length > 0 && (
+              <Button onClick={handleCloneSelected} size="sm" className="gap-2">
+                <Copy className="h-4 w-4" />
+                Clonar ({selectedMovements.length})
+              </Button>
+            )}
             <Button variant="outline" size="sm" className="gap-2">
               <DollarSign className="h-4 w-4" />
               Filtros
@@ -239,6 +270,18 @@ export default function GestaoCaixa() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedMovements.length === cashMovements.length}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedMovements(cashMovements.map((m: any) => m.id));
+                      } else {
+                        setSelectedMovements([]);
+                      }
+                    }}
+                  />
+                </TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Descrição</TableHead>
@@ -251,6 +294,18 @@ export default function GestaoCaixa() {
                 const isEntrada = movement.description?.startsWith('Entrada');
                 return (
                   <TableRow key={movement.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedMovements.includes(movement.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedMovements([...selectedMovements, movement.id]);
+                          } else {
+                            setSelectedMovements(selectedMovements.filter(id => id !== movement.id));
+                          }
+                        }}
+                      />
+                    </TableCell>
                     <TableCell>{format(new Date(movement.expense_date), 'dd/MM/yyyy')}</TableCell>
                     <TableCell>
                       <Badge variant={isEntrada ? 'default' : 'destructive'}>
