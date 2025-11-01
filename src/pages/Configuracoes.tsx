@@ -335,7 +335,24 @@ export default function Configuracoes() {
                   </ul>
                   <p className="text-xs text-orange-600">⚠️ Formato CSV/Excel compatível com MySQL, PostgreSQL e outros bancos</p>
                 </div>
-                <Button className="w-full bg-white text-orange-600 hover:bg-gray-100">
+                <Button className="w-full bg-white text-orange-600 hover:bg-gray-100" onClick={() => {
+                  // Implementar exportação CSV
+                  import('@/lib/supabase').then(async ({ supabase }) => {
+                    const tables = ['products', 'customers', 'suppliers', 'employees', 'materials', 'sales', 'services', 'expenses', 'marketplace_orders', 'production_orders', 'invoices', 'machines_vehicles', 'usuarios'];
+                    for (const table of tables) {
+                      const { data } = await supabase.from(table).select('*');
+                      if (!data || data.length === 0) continue;
+                      const headers = Object.keys(data[0]);
+                      const csv = [headers.join(','), ...data.map(row => headers.map(h => JSON.stringify(row[h] ?? '')).join(','))].join('\n');
+                      const blob = new Blob([csv], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `backup-${table}-${new Date().toISOString().slice(0,10)}.csv`;
+                      a.click();
+                    }
+                  });
+                }}>
                   <Download className="h-4 w-4 mr-2" />
                   Depositar Backup CSV/Excel
                 </Button>
@@ -353,14 +370,29 @@ export default function Configuracoes() {
                 <p className="text-sm">Restaure todos os dados do sistema a partir de um arquivo de backup CSV/Excel.</p>
                 <div className="bg-red-100 text-red-800 p-4 rounded-lg">
                   <p className="font-semibold">⚠️ Atenção!</p>
-                  <p className="text-sm">A importação irá <strong>substituir todos os dados atuais</strong> do sistema. Confirme-se de ter um backup antes de prosseguir.</p>
+                  <p className="text-sm">A importação irá <strong>adicionar aos dados atuais</strong> do sistema. Confirme-se de ter um backup antes de prosseguir.</p>
                 </div>
                 <div>
-                  <Label className="text-white">Selecionar Arquivo de Backup (.json)</Label>
+                  <Label className="text-white">Selecionar Arquivo de Backup (.csv)</Label>
                   <Input
                     type="file"
-                    accept=".json"
+                    accept=".csv"
                     className="bg-white/10 border-white/20 text-white file:bg-white file:text-green-600"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const text = await file.text();
+                      const lines = text.split('\n');
+                      const headers = lines[0].split(',');
+                      const rows = lines.slice(1).map(line => {
+                        const values = line.split(',');
+                        return headers.reduce((obj, h, i) => ({ ...obj, [h]: JSON.parse(values[i] || 'null') }), {});
+                      });
+                      const tableName = file.name.match(/backup-(.+)-\d{4}/)?.[1] || 'unknown';
+                      const { supabase } = await import('@/lib/supabase');
+                      await supabase.from(tableName).insert(rows);
+                      alert(`${rows.length} registros importados!`);
+                    }}
                   />
                   <p className="text-xs mt-1">Procurar... Nenhum arquivo selecionado</p>
                 </div>

@@ -96,25 +96,9 @@ export default function GerenciamentoUsuarios() {
     try {
       console.log('Tentando criar usuário:', { nome, email, tipo, permissoes });
       
-      // Primeiro, criar usuário no auth do Supabase
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: senha,
-        options: {
-          data: {
-            nome,
-            tipo
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      // Depois, criar registro na tabela usuarios
       const { data, error } = await supabase
         .from('usuarios')
         .insert([{
-          id: authData.user?.id,
           nome,
           email,
           tipo,
