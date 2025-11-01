@@ -53,13 +53,13 @@ export default function GerenciamentoUsuarios() {
     
     // Realtime subscription
     const channel = supabase
-      .channel('usuarios-changes')
+      .channel('usuarios-changes-' + Date.now())
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'usuarios',
       }, () => {
-        console.log('Mudança detectada em usuários');
+        console.log('Mudança detectada - recarregando usuários');
         carregarUsuarios();
       })
       .subscribe();
@@ -98,7 +98,7 @@ export default function GerenciamentoUsuarios() {
         .insert([{
           nome,
           email,
-          senha_hash: btoa(senha), // Hash simples (em produção, use bcrypt)
+          senha_hash: btoa(senha),
           tipo,
           permissoes,
           ativo: true
@@ -107,6 +107,8 @@ export default function GerenciamentoUsuarios() {
         .single();
       
       if (error) throw error;
+      
+      console.log('Usuário criado com sucesso:', data);
       
       toast.success("Usuário criado com sucesso!");
       setShowDialog(false);

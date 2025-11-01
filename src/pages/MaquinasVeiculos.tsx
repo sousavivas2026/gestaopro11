@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Settings, Copy } from "lucide-react";
+import { Trash2, Edit, Settings, Copy, FileText } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ export default function MaquinasVeiculos() {
   const queryClient = useQueryClient();
   const [editingAsset, setEditingAsset] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: assets = [] } = useQuery({
     queryKey: ['machines-vehicles'],
@@ -95,6 +97,60 @@ export default function MaquinasVeiculos() {
   const handleClone = async (asset: any) => {
     const { id, created_date, updated_date, ...clonedData } = asset;
     await createMutation.mutateAsync(clonedData);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === assets.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(assets.map((a: any) => a.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione itens para exportar");
+      return;
+    }
+    const selectedAssets = assets.filter((a: any) => selectedIds.includes(a.id));
+    const csv = [
+      ['Tipo', 'Nome', 'Marca', 'Modelo', 'Localização', 'Status'],
+      ...selectedAssets.map((a: any) => [
+        a.type, a.name, a.brand || '', a.model || '', a.location || '', a.status
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `maquinas-veiculos-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('machines_vehicles').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['machines-vehicles'] });
+      toast.success(`${selectedIds.length} item(s) removido(s)`);
+      setSelectedIds([]);
+    },
+  });
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} item(s)?`)) return;
+    deleteMultipleMutation.mutate(selectedIds);
   };
 
   const statusColors = {
@@ -219,12 +275,30 @@ export default function MaquinasVeiculos() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Máquinas e Veículos Cadastrados</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Máquinas e Veículos Cadastrados</CardTitle>
+            {selectedIds.length > 0 && (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                  <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedIds.length === assets.length && assets.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Marca/Modelo</TableHead>
@@ -237,6 +311,12 @@ export default function MaquinasVeiculos() {
             <TableBody>
               {assets.map((asset: any) => (
                 <TableRow key={asset.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(asset.id)}
+                      onCheckedChange={() => handleSelectOne(asset.id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline">{asset.type}</Badge>
                   </TableCell>

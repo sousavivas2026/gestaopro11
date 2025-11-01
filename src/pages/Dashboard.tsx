@@ -7,6 +7,10 @@ import { Wallet, TrendingUp, TrendingDown, Package, Search, Sparkles, ArrowRight
 import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { supabase } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
+
+import { AISearch } from "@/components/AISearch";
 
 const chartData = [
   { product: "Fliperama metal - 1player", value: 1800 },
@@ -30,6 +34,34 @@ const recentServices = [
 
 export default function Dashboard() {
   const { saldoCaixa, totalEntradas, totalSaidas, entradasCaixa, isLoading } = useDashboardData();
+  
+  const { data: products = [] } = useQuery({
+    queryKey: ['dashboard-products'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: sales = [] } = useQuery({
+    queryKey: ['dashboard-sales-month'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('sales').select('*').order('sale_date', { ascending: false }).limit(5);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ['dashboard-services'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('services').select('*').order('service_date', { ascending: false }).limit(3);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const openMonitor = (type: 'production' | 'products' | 'management') => {
     const routes = {
       production: '/monitor-producao',
@@ -74,32 +106,7 @@ export default function Dashboard() {
       </div>
 
       {/* Smart Search */}
-      <Card className="bg-gradient-to-r from-blue-900 to-blue-700 text-white border-none">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Sparkles className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">Pesquisa Inteligente</h3>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-sm">Busca Normal</span>
-              <div className="relative inline-block w-11 h-6">
-                <input type="checkbox" className="sr-only peer" />
-                <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:bg-white/30 transition-colors"></div>
-                <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-5"></div>
-              </div>
-            </div>
-            <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20">
-              <Search className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-300" />
-            <Input
-              placeholder="Buscar produtos, vendas, serviços..."
-              className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus-visible:ring-white/40"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <AISearch />
 
       {/* Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -136,7 +143,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
           title="Produtos Cadastrados"
-          value="17"
+          value={products.length.toString()}
           icon={Package}
           variant="warning"
         />
@@ -222,18 +229,22 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentSales.map((sale, index) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{sale.product}</p>
-                    <p className="text-xs text-muted-foreground">Qtd: {sale.qty}</p>
+              {sales.length === 0 ? (
+                <p className="text-center text-muted-foreground">Nenhuma venda recente</p>
+              ) : (
+                sales.map((sale: any) => (
+                  <div key={sale.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{sale.product_name}</p>
+                      <p className="text-xs text-muted-foreground">Qtd: {sale.quantity}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-success">R$ {sale.total_revenue?.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">Lucro: R$ {sale.profit?.toFixed(2)}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-success">{sale.value}</p>
-                    <p className="text-xs text-muted-foreground">Lucro: {sale.profit}</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -249,16 +260,20 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentServices.map((service, index) => (
-              <div key={index} className="flex items-center justify-between py-2">
-                <div className="flex-1">
-                  <p className="font-medium">{service.name}</p>
-                  <p className="text-sm text-muted-foreground">Cliente: {service.client}</p>
-                  <p className="text-xs text-muted-foreground">Qtd: {service.qty} • {service.hours}</p>
+            {services.length === 0 ? (
+              <p className="text-center text-muted-foreground">Nenhum serviço recente</p>
+            ) : (
+              services.map((service: any) => (
+                <div key={service.id} className="flex items-center justify-between py-2">
+                  <div className="flex-1">
+                    <p className="font-medium">{service.service_type}</p>
+                    <p className="text-sm text-muted-foreground">Cliente: {service.customer_name}</p>
+                    <p className="text-xs text-muted-foreground">Status: {service.status}</p>
+                  </div>
+                  <p className="font-semibold text-lg">R$ {service.total_value?.toFixed(2)}</p>
                 </div>
-                <p className="font-semibold text-lg">{service.value}</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

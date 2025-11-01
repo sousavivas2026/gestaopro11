@@ -56,6 +56,7 @@ export default function ConfiguracoesAparencia() {
       return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
     };
 
+    // Aplicar em todos os elementos
     root.style.setProperty('--primary', hexToHSL(config.primaryColor));
     root.style.setProperty('--secondary', hexToHSL(config.secondaryColor));
     root.style.setProperty('--background', hexToHSL(config.backgroundColor));
@@ -63,6 +64,30 @@ export default function ConfiguracoesAparencia() {
     root.style.setProperty('--font-family', config.fontFamily);
     
     document.body.style.fontFamily = config.fontFamily;
+    document.body.style.backgroundColor = config.backgroundColor;
+    document.body.style.color = config.textColor;
+    
+    // Criar estilos globais forçados
+    let styleSheet = document.getElementById('custom-theme-styles');
+    if (!styleSheet) {
+      styleSheet = document.createElement('style');
+      styleSheet.id = 'custom-theme-styles';
+      document.head.appendChild(styleSheet);
+    }
+    
+    styleSheet.textContent = `
+      :root {
+        --primary: ${hexToHSL(config.primaryColor)} !important;
+        --secondary: ${hexToHSL(config.secondaryColor)} !important;
+        --background: ${hexToHSL(config.backgroundColor)} !important;
+        --foreground: ${hexToHSL(config.textColor)} !important;
+      }
+      body {
+        font-family: ${config.fontFamily} !important;
+        background-color: ${config.backgroundColor} !important;
+        color: ${config.textColor} !important;
+      }
+    `;
   };
 
   const handleSave = () => {

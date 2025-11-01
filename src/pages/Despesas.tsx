@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Edit, Receipt, Copy, Plus } from "lucide-react";
+import { Trash2, Edit, Receipt, Copy, Plus, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CopyButton } from "@/components/CopyButton";
@@ -19,6 +19,7 @@ export default function Despesas() {
   const queryClient = useQueryClient();
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: expenses = [] } = useQuery({
     queryKey: ['expenses'],
@@ -101,6 +102,60 @@ export default function Despesas() {
   const totalExpenses = expenses.reduce((sum: number, e: any) => sum + (e.value || 0), 0);
   const paidExpenses = expenses.filter((e: any) => e.paid).reduce((sum: number, e: any) => sum + (e.value || 0), 0);
   const pendingExpenses = totalExpenses - paidExpenses;
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === expenses.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(expenses.map((e: any) => e.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione despesas para exportar");
+      return;
+    }
+    const selectedExpenses = expenses.filter((e: any) => selectedIds.includes(e.id));
+    const csv = [
+      ['Descrição', 'Categoria', 'Valor', 'Data', 'Vencimento', 'Status'],
+      ...selectedExpenses.map((e: any) => [
+        e.description, e.category, e.value, e.expense_date, e.due_date || '', e.paid ? 'Paga' : 'Pendente'
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `despesas-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('expenses').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast.success(`${selectedIds.length} despesa(s) removida(s)`);
+      setSelectedIds([]);
+    },
+  });
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} despesa(s)?`)) return;
+    deleteMultipleMutation.mutate(selectedIds);
+  };
 
   return (
     <div className="p-4 md:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
@@ -230,12 +285,30 @@ export default function Despesas() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Despesas</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Lista de Despesas</CardTitle>
+              {selectedIds.length > 0 && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                    <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedIds.length === expenses.length && expenses.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Valor</TableHead>
@@ -248,6 +321,12 @@ export default function Despesas() {
               <TableBody>
                 {expenses.map((expense: any) => (
                   <TableRow key={expense.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(expense.id)}
+                        onCheckedChange={() => handleSelectOne(expense.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{expense.description}</TableCell>
                     <TableCell>{expense.category}</TableCell>
                     <TableCell>R$ {expense.value?.toFixed(2)}</TableCell>

@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Wrench, Copy } from "lucide-react";
+import { Trash2, Edit, Wrench, Copy, FileText } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { CopyButton } from "@/components/CopyButton";
@@ -18,6 +19,7 @@ export default function Servicos() {
   const queryClient = useQueryClient();
   const [editingService, setEditingService] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: services = [] } = useQuery({
     queryKey: ['services'],
@@ -118,6 +120,60 @@ export default function Servicos() {
   const handleClone = async (service: any) => {
     const { id, created_date, updated_date, ...clonedData } = service;
     await createMutation.mutateAsync(clonedData);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === services.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(services.map((s: any) => s.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione serviços para exportar");
+      return;
+    }
+    const selectedServices = services.filter((s: any) => selectedIds.includes(s.id));
+    const csv = [
+      ['Data', 'Tipo', 'Cliente', 'Funcionário', 'Valor', 'Status'],
+      ...selectedServices.map((s: any) => [
+        s.service_date, s.service_type, s.customer_name, s.employee_name || '', s.total_value, s.status
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `servicos-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('services').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      toast.success(`${selectedIds.length} serviço(s) removido(s)`);
+      setSelectedIds([]);
+    },
+  });
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} serviço(s)?`)) return;
+    deleteMultipleMutation.mutate(selectedIds);
   };
 
   const statusColors = {
@@ -260,12 +316,30 @@ export default function Servicos() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Serviços Cadastrados</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Serviços Cadastrados</CardTitle>
+            {selectedIds.length > 0 && (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                  <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedIds.length === services.length && services.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Cliente</TableHead>
@@ -278,6 +352,12 @@ export default function Servicos() {
             <TableBody>
               {services.map((service: any) => (
                 <TableRow key={service.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(service.id)}
+                      onCheckedChange={() => handleSelectOne(service.id)}
+                    />
+                  </TableCell>
                   <TableCell>{format(new Date(service.service_date), 'dd/MM/yyyy')}</TableCell>
                   <TableCell>{service.service_type}</TableCell>
                   <TableCell>{service.customer_name}</TableCell>

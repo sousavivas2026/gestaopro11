@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import AISearch from "./AISearch";
+import { AISearch } from "./AISearch";
 import { ReactNode } from "react";
 
 interface LayoutProps {

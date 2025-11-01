@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, FileCheck, Copy } from "lucide-react";
+import { Trash2, Edit, FileCheck, Copy, FileText } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ export default function NotasFiscais() {
   const queryClient = useQueryClient();
   const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices'],
@@ -114,6 +116,60 @@ export default function NotasFiscais() {
   const handleClone = async (invoice: any) => {
     const { id, created_date, updated_date, ...clonedData } = invoice;
     await createMutation.mutateAsync(clonedData);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === invoices.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(invoices.map((i: any) => i.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleExportSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione notas para exportar");
+      return;
+    }
+    const selectedInvoices = invoices.filter((i: any) => selectedIds.includes(i.id));
+    const csv = [
+      ['Número', 'Tipo', 'Fornecedor/Cliente', 'Valor', 'Data Emissão', 'Status'],
+      ...selectedInvoices.map((i: any) => [
+        i.invoice_number, i.type, i.supplier_name || i.customer_name || '', i.total_value, i.issue_date, i.status
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `notas-fiscais-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success("Relatório exportado");
+  };
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('invoices').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success(`${selectedIds.length} nota(s) removida(s)`);
+      setSelectedIds([]);
+    },
+  });
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Deseja remover ${selectedIds.length} nota(s)?`)) return;
+    deleteMultipleMutation.mutate(selectedIds);
   };
 
   const statusColors = {
@@ -261,12 +317,30 @@ export default function NotasFiscais() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Notas Fiscais Cadastradas</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Notas Fiscais Cadastradas</CardTitle>
+            {selectedIds.length > 0 && (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={handleExportSelected}>
+                  <FileText className="h-4 w-4 mr-2" /> Relatório ({selectedIds.length})
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Remover ({selectedIds.length})
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedIds.length === invoices.length && invoices.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Número</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Fornecedor/Cliente</TableHead>
@@ -279,6 +353,12 @@ export default function NotasFiscais() {
             <TableBody>
               {invoices.map((invoice: any) => (
                 <TableRow key={invoice.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(invoice.id)}
+                      onCheckedChange={() => handleSelectOne(invoice.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
                   <TableCell>
                     <Badge variant={invoice.type === 'entrada' ? 'default' : 'secondary'}>
