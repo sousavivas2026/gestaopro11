@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSoundAlert } from "@/contexts/SoundAlertContext";
+import { MonitorAudioControls } from "./MonitorAudioControls";
 
 type ViewType = 'critical' | 'low_stock' | 'purchase_list';
 
@@ -82,6 +83,7 @@ export function ProductsMonitor() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-orange-900 to-slate-900 p-8">
+      <MonitorAudioControls context="products" />
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-4 mb-4">

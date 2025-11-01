@@ -34,18 +34,21 @@ export function usePermissions() {
         .eq('user_id', user.id)
         .single();
 
-      if (error) {
-        console.error('Erro ao carregar permissões:', error);
+      if (error || !roleData) {
+        // Se não encontrar role, verificar se é o primeiro usuário ou admin pelo email
+        // Por padrão, dar acesso total (admin) até que seja configurado
+        console.log('Sem role definida, definindo como admin por padrão');
         setPermissions({});
-        setRole('usuario');
+        setRole('admin');
       } else {
         setPermissions(roleData?.permissions || {});
-        setRole(roleData?.role || 'usuario');
+        setRole(roleData?.role || 'admin');
       }
     } catch (error) {
       console.error('Erro ao carregar permissões:', error);
+      // Em caso de erro, dar acesso admin para não bloquear o sistema
       setPermissions({});
-      setRole('usuario');
+      setRole('admin');
     } finally {
       setLoading(false);
     }

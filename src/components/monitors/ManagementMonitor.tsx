@@ -8,6 +8,7 @@ import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import MarketplaceSlide from "@/components/monitor/MarketplaceSlide";
 import { useSoundAlert } from "@/contexts/SoundAlertContext";
+import { MonitorAudioControls } from "./MonitorAudioControls";
 
 type ViewType = 'marketplace' | 'expenses' | 'birthdays' | 'services_summary';
 
@@ -99,6 +100,7 @@ export function ManagementMonitor() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-8">
+      <MonitorAudioControls context="management" />
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-4 mb-4">
