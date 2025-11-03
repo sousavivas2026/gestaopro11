@@ -1,16 +1,12 @@
-import { useState } from "react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Wallet, TrendingUp, TrendingDown, Package, Search, Sparkles, ArrowRight, ShoppingCart, Wrench } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Package, ShoppingCart, Wrench, ArrowRight } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
-
-import { FloatingAISearch } from "@/components/FloatingAISearch";
 
 const chartData = [
   { product: "Fliperama metal - 1player", value: 1800 },
@@ -33,7 +29,6 @@ const recentServices = [
 ];
 
 export default function Dashboard() {
-  const [showSearch, setShowSearch] = useState(false);
   const { saldoCaixa, totalEntradas, totalSaidas, entradasCaixa, isLoading } = useDashboardData();
   
   const { data: products = [] } = useQuery({
@@ -116,18 +111,6 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
-
-      {/* Smart Search */}
-      {showSearch && <FloatingAISearch onClose={() => setShowSearch(false)} />}
-      {!showSearch && (
-        <Button 
-          onClick={() => setShowSearch(true)}
-          className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg z-40"
-          variant="default"
-        >
-          <Sparkles className="h-6 w-6" />
-        </Button>
-      )}
 
       {/* Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

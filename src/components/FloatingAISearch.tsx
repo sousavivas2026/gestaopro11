@@ -106,7 +106,7 @@ export function FloatingAISearch({ onClose }: { onClose?: () => void }) {
   return (
     <div
       ref={cardRef}
-      className="fixed z-50 w-[600px] cursor-move"
+      className="fixed z-[9999] w-[600px] cursor-move"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
