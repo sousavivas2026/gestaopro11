@@ -39,13 +39,13 @@ All colors MUST be HSL.
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 10% 95%;
-    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-foreground: 0 0% 20%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 0 0% 20%;
     --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -88,13 +88,14 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 
-  /* Light mode text with shadow for better visibility */
-  :root body {
-    text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+  /* Sidebar styles for better contrast in light mode */
+  :root [data-sidebar] {
+    --tw-text-opacity: 1;
   }
-
-  /* Remove shadow in dark mode */
-  .dark body {
-    text-shadow: none;
+  
+  /* Ensure text is visible in light mode */
+  :root .sidebar a,
+  :root [data-sidebar] a {
+    color: hsl(var(--sidebar-foreground));
   }
 }
