@@ -67,9 +67,9 @@ export function ProductsMonitor() {
 
   const getViewIcon = () => {
     switch(currentView) {
-      case 'critical': return <AlertTriangle className="w-16 h-16 text-red-400" />;
-      case 'low_stock': return <Package className="w-16 h-16 text-yellow-400" />;
-      case 'purchase_list': return <ShoppingCart className="w-16 h-16 text-orange-400" />;
+      case 'critical': return <AlertTriangle className="w-16 h-16 text-yellow-500" />;
+      case 'low_stock': return <Package className="w-16 h-16 text-yellow-500" />;
+      case 'purchase_list': return <ShoppingCart className="w-16 h-16 text-yellow-500" />;
     }
   };
 
@@ -82,7 +82,7 @@ export function ProductsMonitor() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-orange-900 to-slate-900 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-yellow-900 to-slate-900 p-8">
       <MonitorAudioControls context="products" />
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
@@ -117,27 +117,27 @@ export function ProductsMonitor() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {getCurrentProducts().map((product: any) => (
                 <Card key={product.id} className={`bg-gradient-to-br ${
-                  currentView === 'critical' ? 'from-red-900 to-orange-900 border-red-600' :
-                  'from-yellow-900 to-orange-900 border-yellow-600'
+                  currentView === 'critical' ? 'from-yellow-900 to-amber-800 border-yellow-600' :
+                  'from-yellow-900 to-amber-800 border-yellow-600'
                 } border-2 shadow-2xl`}>
                   <CardContent className="pt-6">
                     <div className="text-center">
                       {currentView === 'critical' ? 
-                        <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-300" /> :
-                        <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-orange-300" />
+                        <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-yellow-400" /> :
+                        <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
                       }
                       <h3 className="text-2xl font-bold text-white mb-2">{product.name}</h3>
-                      <p className="text-orange-200 mb-4">{product.sku || 'Sem SKU'}</p>
+                      <p className="text-yellow-200 mb-4">{product.sku || 'Sem SKU'}</p>
                       <div className="bg-black/30 rounded-lg p-4 mb-4">
-                        <p className="text-red-300 text-lg">Estoque Atual</p>
+                        <p className="text-yellow-300 text-lg">Estoque Atual</p>
                         <p className="text-4xl font-bold text-white">{product.stock_quantity}</p>
                       </div>
                       <div className="bg-black/30 rounded-lg p-4 mb-4">
-                        <p className="text-orange-300 text-lg">Estoque Mínimo</p>
+                        <p className="text-yellow-300 text-lg">Estoque Mínimo</p>
                         <p className="text-3xl font-bold text-white">{product.minimum_stock}</p>
                       </div>
                       {product.location && (
-                        <p className="text-orange-300 text-sm">Local: {product.location}</p>
+                        <p className="text-yellow-300 text-sm">Local: {product.location}</p>
                       )}
                       <Badge className={`mt-3 text-lg px-4 py-2 ${
                         currentView === 'critical' ? 'bg-red-600' : 'bg-yellow-600'

@@ -43,11 +43,7 @@ export function ProductionMonitor() {
 
   const pendingOrders = orders.filter((o: any) => o.status === 'pendente');
   const inProgressOrders = orders.filter((o: any) => o.status === 'em_andamento');
-  const completedToday = orders.filter((o: any) => {
-    const today = new Date().toDateString();
-    const orderDate = new Date(o.updated_date || o.created_date).toDateString();
-    return o.status === 'concluido' && today === orderDate;
-  });
+  const completedOrders = orders.filter((o: any) => o.status === 'concluido');
 
   useEffect(() => {
     if (pendingOrders.length > 0 && alertMode !== 'disabled') {
@@ -59,15 +55,15 @@ export function ProductionMonitor() {
     switch(currentView) {
       case 'pending': return 'ORDENS PENDENTES';
       case 'in_progress': return 'EM PRODUÇÃO';
-      case 'completed': return 'CONCLUÍDOS HOJE';
+      case 'completed': return 'ORDENS CONCLUÍDAS';
     }
   };
 
   const getViewIcon = () => {
     switch(currentView) {
-      case 'pending': return <Clock className="w-16 h-16 text-yellow-400" />;
-      case 'in_progress': return <Factory className="w-16 h-16 text-blue-400" />;
-      case 'completed': return <CheckCircle2 className="w-16 h-16 text-green-400" />;
+      case 'pending': return <Clock className="w-16 h-16 text-purple-400" />;
+      case 'in_progress': return <Factory className="w-16 h-16 text-purple-400" />;
+      case 'completed': return <CheckCircle2 className="w-16 h-16 text-purple-400" />;
     }
   };
 
@@ -75,7 +71,7 @@ export function ProductionMonitor() {
     switch(currentView) {
       case 'pending': return pendingOrders;
       case 'in_progress': return inProgressOrders;
-      case 'completed': return completedToday;
+      case 'completed': return completedOrders;
     }
   };
 
