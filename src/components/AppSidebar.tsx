@@ -97,8 +97,8 @@ export function AppSidebar() {
                       end={item.url === "/"}
                       className={({ isActive }) =>
                         isActive
-                          ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 shadow-md font-medium"
-                          : "text-sidebar-foreground hover:bg-blue-600 hover:text-white transition-colors"
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 shadow-md font-medium"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
                       }
                     >
                       <item.icon className="h-3.5 w-3.5" />
@@ -121,8 +121,8 @@ export function AppSidebar() {
                   to="/gerenciamento-usuarios" 
                   className={({ isActive }) => 
                     isActive 
-                      ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 shadow-md font-medium" 
-                      : "text-sidebar-foreground hover:bg-blue-600 hover:text-white transition-colors"
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 shadow-md font-medium" 
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
                   }
                 >
                   <UsersIcon className="h-4 w-4" />
@@ -135,7 +135,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton 
               tooltip="Sair do Sistema"
-              className="min-h-[36px] text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              className="min-h-[36px] text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
               onClick={async () => {
                 const { error } = await supabase.auth.signOut();
                 if (!error) {
