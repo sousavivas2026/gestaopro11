@@ -36,6 +36,17 @@ export function Layout({ children }: LayoutProps) {
         {showFloatingSearch && (
           <FloatingAISearch onClose={() => setShowFloatingSearch(false)} />
         )}
+        
+        {/* Floating Search Button */}
+        {!showFloatingSearch && (
+          <Button 
+            onClick={() => setShowFloatingSearch(true)}
+            className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg z-50"
+            variant="default"
+          >
+            <Sparkles className="h-6 w-6" />
+          </Button>
+        )}
       </div>
     </SidebarProvider>
   );
