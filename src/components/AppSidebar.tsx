@@ -57,11 +57,11 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar touch-pan-y overscroll-contain w-[180px] shadow-[0_0_20px_rgba(16,185,129,0.3)]" style={{ WebkitOverflowScrolling: 'touch' }}>
+    <Sidebar collapsible="icon" className="border-sidebar-border bg-sidebar touch-pan-y overscroll-contain w-[180px]" style={{ WebkitOverflowScrolling: 'touch' }}>
       <SidebarHeader className="border-b border-sidebar-border p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs shadow-lg">
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-primary-foreground font-bold text-xs">
               GP
             </div>
             {!collapsed && (
@@ -97,8 +97,8 @@ export function AppSidebar() {
                       end={item.url === "/"}
                       className={({ isActive }) =>
                         isActive
-                          ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 shadow-md font-medium"
-                          : "text-sidebar-foreground hover:bg-blue-600 hover:text-white transition-colors"
+                          ? "bg-gradient-to-r from-blue-500 to-blue-700 text-primary-foreground hover:from-blue-600 hover:to-blue-800 font-medium"
+                          : "text-sidebar-foreground hover:bg-blue-600 hover:text-primary-foreground transition-colors"
                       }
                     >
                       <item.icon className="h-3.5 w-3.5" />
@@ -121,8 +121,8 @@ export function AppSidebar() {
                   to="/gerenciamento-usuarios" 
                   className={({ isActive }) => 
                     isActive 
-                      ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 shadow-md font-medium" 
-                      : "text-sidebar-foreground hover:bg-blue-600 hover:text-white transition-colors"
+                      ? "bg-gradient-to-r from-blue-500 to-blue-700 text-primary-foreground hover:from-blue-600 hover:to-blue-800 font-medium" 
+                      : "text-sidebar-foreground hover:bg-blue-600 hover:text-primary-foreground transition-colors"
                   }
                 >
                   <UsersIcon className="h-4 w-4" />
