@@ -92,10 +92,14 @@ export default function GerenciamentoUsuarios() {
       return;
     }
 
+    // Validar senha
+    if (senha.length < 6) {
+      toast.error("A senha deve ter no mínimo 6 caracteres");
+      return;
+    }
+
     setLoading(true);
     try {
-      console.log('Tentando criar usuário:', { nome, email, tipo, permissoes });
-      
       // Primeiro, criar usuário no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -104,20 +108,25 @@ export default function GerenciamentoUsuarios() {
           data: {
             nome,
             tipo
-          }
+          },
+          emailRedirectTo: window.location.origin
         }
       });
 
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error('Usuário não foi criado no sistema de autenticação');
+      if (authError) {
+        // Tratar erros específicos
+        if (authError.message.includes('already registered')) {
+          throw new Error('Este email já está cadastrado no sistema');
+        }
+        throw authError;
       }
 
-      console.log('Usuário Auth criado:', authData.user.id);
+      if (!authData.user) {
+        throw new Error('Falha ao criar usuário no sistema de autenticação');
+      }
       
-      // Depois, criar entrada na tabela usuarios
-      const { data: userData, error: userError } = await supabase
+      // Depois, criar entrada na tabela usuarios (o trigger criará em user_roles automaticamente)
+      const { error: userError } = await supabase
         .from('usuarios')
         .insert([{
           nome,
@@ -125,23 +134,21 @@ export default function GerenciamentoUsuarios() {
           tipo,
           permissoes,
           ativo: true
-        }])
-        .select()
-        .single();
+        }]);
       
-      if (userError) throw userError;
+      if (userError) {
+        // Se falhar ao criar na tabela usuarios, tentar deletar o usuário auth
+        await supabase.auth.admin.deleteUser(authData.user.id).catch(console.error);
+        throw new Error('Erro ao salvar dados do usuário: ' + userError.message);
+      }
       
-      console.log('Usuário na tabela criado com sucesso:', userData);
-      
-      toast.success("Usuário criado com sucesso! Eles podem fazer login agora.");
+      toast.success("Usuário criado com sucesso! Login disponível imediatamente.");
       setShowDialog(false);
       resetForm();
-      
-      // Forçar recarregamento imediato
       await carregarUsuarios();
     } catch (error: any) {
       console.error('Erro ao criar usuário:', error);
-      toast.error("Erro ao criar usuário: " + error.message);
+      toast.error(error.message || "Erro ao criar usuário");
     } finally {
       setLoading(false);
     }
